@@ -132,7 +132,7 @@ def flatten(dictionary, prefix=''):
     return f
 
 
-urls = ('/(.+)', 'DribbbleFeeder')
+urls = ('/(\w+)', 'DribbbleFeeder')
 application = web.application(urls, globals())
 
 
