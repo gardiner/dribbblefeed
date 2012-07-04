@@ -53,19 +53,41 @@ class DribbbleFeed(object):
     '<?xml version="1.0" encoding="UTF-8" ?><rss version="2.0">...</rss>'
     """
 
-    SKELETON = '<?xml version="1.0" encoding="UTF-8" ?><rss version="2.0"><channel>'\
-               '<title>%(title)s</title><description>%(description)s</description>'\
-               '<link>%(link)s</link><lastBuildDate>%(builddate)s</lastBuildDate>'\
-               '<pubDate>%(pubdate)s</pubDate><ttl>%(ttl)s</ttl>%(items)s</channel></rss>'
-    ITEM     = '<item><title>%(title)s</title><description>%(content)s</description>'\
-               '<link>%(link)s</link><guid>%(guid)s</guid><pubDate>%(pubdate)s</pubDate></item>'
-    CONTENT  = '<a href="%(url)s"><img alt="" src="%(image_url)s"> %(title)s</a>'
+    SKELETON =  """<?xml version="1.0" encoding="UTF-8" ?><rss version="2.0">
+                    <channel>
+                        <title>%(title)s</title>
+                        <description>%(description)s</description>
+                        <link>%(link)s</link>
+                        <lastBuildDate>%(builddate)s</lastBuildDate>
+                        <pubDate>%(pubdate)s</pubDate>
+                        <ttl>%(ttl)s</ttl>
+                        %(items)s
+                    </channel>
+                </rss>"""
+    ITEM =      """<item>
+                    <title>%(title)s</title>
+                    <description>%(content)s</description>
+                    <link>%(link)s</link>
+                    <guid>%(guid)s</guid>
+                    <pubDate>%(pubdate)s</pubDate>
+                </item>"""
+    CONTENT =   """<div class="player">
+                    <a href="%(player_url)s">
+                        <img alt="" src="%(player_avatar_url)s">
+                        %(player_name)s (%(player_username)s)
+                    </a>
+                </div>
+                <div class="shot">
+                    <a href="%(url)s">
+                        <img alt="" src="%(image_url)s"> %(title)s
+                    </a>
+                </div>"""
 
     def players_shots_following(self, data):
         def itemize(data):
             return self.ITEM % dict(
                 title=data['title'],
-                content=escape(self.CONTENT % data),
+                content=escape(self.CONTENT % flatten(data)),
                 link=data['url'],
                 guid=data['url'],
                 pubdate=data['created_at']
@@ -92,6 +114,22 @@ class DribbbleFeeder(object):
         except Exception, e:
             return e
 
+
+def flatten(dictionary, prefix=''):
+    """Creates a flattened version of the dictionary where inner dicts
+    are inserted on the top level with a prefix of their key.
+
+    >>> flatten(dict(a=1, b=dict(c=2))) == dict(a=1, b_c=2)
+    True
+    """
+    f = {}
+    for k, v in dictionary.items():
+        key = prefix + k
+        if isinstance(v, dict):
+            f.update(flatten(v, key + '_'))
+        else:
+            f[key] = v
+    return f
 
 
 urls = ('/(.+)', 'DribbbleFeeder')
